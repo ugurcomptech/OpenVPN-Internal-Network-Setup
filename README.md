@@ -23,7 +23,12 @@ graph TD
     style C fill:#fff0e6,stroke:#ff9933,stroke-width:2px
 
 ```
+
+Bu doküman, bir OpenVPN sunucu ve istemci yapısı kurarak özel bir iç ağ (TUN arayüzü) oluşturmayı açıklar.
+Bu yapı sayesinde dış (public) IP adresi değişmeden, istemciler arasında şifreli ve güvenli bir özel ağ oluşturulur.
+
 ---
+
 
 ## 1. Kurulum
 

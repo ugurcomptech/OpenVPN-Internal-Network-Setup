@@ -204,5 +204,3 @@ cat /etc/openvpn/openvpn-status.log
 ---
 
 ## Okuduğunuz için teşekkürler.
-Uğur Uğur
-OpenVPN Özel Ağ Dokümantasyonu

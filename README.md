@@ -1,6 +1,25 @@
 # OpenVPN İç Ağ (Internal Network) Kurulumu
 
-<img width="1011" height="664" alt="openvpn" src="https://github.com/user-attachments/assets/68f9661c-739f-4e62-84a2-0014f9f5c78b" />
+graph TD
+    A[Client 1<br>100.100.0.2] ---|TUN Interface| B(OpenVPN Server<br>100.100.0.1)
+    A2[Client 2<br>100.100.0.3] ---|TUN Interface| B
+    A3[Client 3<br>100.100.0.4] ---|TUN Interface| B
+
+    subgraph InternalVPNNetwork["OpenVPN Internal Network (100.100.0.0/24)"]
+        A
+        A2
+        A3
+        B
+    end
+
+    B ---|Public Internet| C[Public IP / Cloud Server]
+
+    style A fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    style A2 fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    style A3 fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    style B fill:#dfffe0,stroke:#33a532,stroke-width:2px
+    style InternalVPNNetwork fill:#f8f9fa,stroke:#bbb,stroke-width:1px,stroke-dasharray:5 5
+    style C fill:#fff0e6,stroke:#ff9933,stroke-width:2px
 
 
 Bu doküman, bir **OpenVPN sunucu ve istemci yapısı** kurarak **özel bir iç ağ (TUN arayüzü)** oluşturmayı açıklar.

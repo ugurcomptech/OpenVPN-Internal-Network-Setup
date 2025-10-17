@@ -200,11 +200,7 @@ cat /etc/openvpn/openvpn-status.log
 
 ---
 
-## ✨ Lisans
-
-Bu doküman ve yapılandırmalar [MIT License](https://opensource.org/licenses/MIT) kapsamında paylaşılabilir.
+Okuduğunuz için teşekkürler.
 
 ---
 
-📘 **Hazırlayan:**
-Uğur Uğur – Private Network Architecture Documentation

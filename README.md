@@ -1,5 +1,8 @@
 # OpenVPN İç Ağ (Internal Network) Kurulumu
 
+
+<img width="632" height="418" alt="openvpn" src="https://github.com/user-attachments/assets/5a90475a-46df-43d4-9be3-9906606501c5" />
+
 Bu doküman, bir **OpenVPN sunucu ve istemci yapısı** kurarak **özel bir iç ağ (TUN arayüzü)** oluşturmayı açıklar.
 Bu yapı sayesinde **dış (public) IP adresi değişmeden**, istemciler arasında **şifreli ve güvenli bir özel ağ** oluşturulur.
 

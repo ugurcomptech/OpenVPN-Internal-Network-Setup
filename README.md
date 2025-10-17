@@ -284,4 +284,4 @@ Bu yapılandırma ile:
 
 ---
 
-## Okudğunuz için teşekkürler.
+## Okuduğunuz için teşekkürler.

@@ -63,7 +63,6 @@ tls-crypt tc.key
 topology subnet
 server 100.100.0.0 255.255.255.0
 push "route 100.100.0.0 255.255.255.0"
-#push "redirect-gateway def1 bypass-dhcp"
 ifconfig-pool-persist ipp.txt
 push "dhcp-option DNS 1.1.1.1"
 push "dhcp-option DNS 1.0.0.1"
@@ -82,9 +81,9 @@ log-append /var/log/openvpn.log
 client-to-client
 ```
 
-**Not:**
-`client-to-client` satırı, VPN istemcilerinin birbirleriyle doğrudan iletişim kurmasını sağlar.
-Bu özellik kapatılmak istenirse satır kaldırılabilir.
+> **Not:**
+> `client-to-client` satırı, VPN istemcilerinin birbirleriyle doğrudan iletişim kurmasını sağlar.
+> Bu özellik kapatılmak istenirse satır kaldırılabilir.
 
 ---
 
@@ -194,7 +193,53 @@ cat /etc/openvpn/openvpn-status.log
 
 ---
 
-## 8. Güvenlik Önerileri
+## 8. Route Çakışma Sorunu ve Çözümü
+
+Bazı sistemlerde aynı anda birden fazla VPN bağlantısı (örneğin bir ofis VPN’i ve bir OpenVPN istemcisi) aktif olduğunda,
+Windows tarafında **route çakışması (IP yönlendirme çakışması)** yaşanabilir.
+
+Bu durumda tünel ağı (örneğin `100.100.0.0/24`) diğer VPN’in rotalarıyla karışabilir ve istemciler VPN ağına erişemez.
+
+### Sorunun Belirtileri
+
+* OpenVPN bağlantısı aktif görünmesine rağmen `ping 100.100.0.1` cevapsız kalır.
+* `Get-NetRoute` çıktısında aynı ağ için birden fazla yönlendirme görünür.
+
+### Çözüm Adımları (Windows)
+
+1. Tünel arayüzlerinin ID’lerini listeleyin:
+
+   ```powershell
+   Get-NetIPInterface
+   ```
+
+2. VPN arayüzlerinin metrik değerlerini düzenleyin:
+
+   ```powershell
+   Set-NetIPInterface -InterfaceIndex 11 -InterfaceMetric 500   # Önceliği düşük VPN
+   Set-NetIPInterface -InterfaceIndex 66 -InterfaceMetric 1     # OpenVPN tüneli (öncelikli)
+   ```
+
+3. Gerekirse yönlendirmeyi manuel olarak oluşturun:
+
+   ```powershell
+   New-NetRoute -DestinationPrefix 100.100.0.0/24 -InterfaceIndex 66 -NextHop 100.100.0.1 -RouteMetric 1 -PolicyStore ActiveStore
+   ```
+
+> Eğer “Instance MSFT_NetRoute already exists” hatası alırsanız, bu route zaten mevcut demektir.
+> Bu durumda, aşağıdaki komutla silip yeniden oluşturabilirsiniz:
+>
+> ```powershell
+> Remove-NetRoute -DestinationPrefix 100.100.0.0/24 -Confirm:$false
+> New-NetRoute -DestinationPrefix 100.100.0.0/24 -InterfaceIndex 66 -NextHop 100.100.0.1 -RouteMetric 1 -PolicyStore ActiveStore
+> ```
+
+Bu şekilde, sistem hangi VPN bağlantısının hangi ağı yönlendireceğini açıkça bilir
+ve **çakışma, bağlantı kaybı veya yönlendirme hataları ortadan kalkar.**
+
+---
+
+## 9. Güvenlik Önerileri
 
 * Güvenlik duvarında yalnızca `1194/udp` portunu açık bırakın.
 * `client-to-client` özelliğini ihtiyacınız yoksa devre dışı bırakın.
@@ -203,4 +248,15 @@ cat /etc/openvpn/openvpn-status.log
 
 ---
 
-## Okuduğunuz için teşekkürler.
+## 10. Özet
+
+Bu yapılandırma ile:
+
+* OpenVPN iç ağı güvenli bir tünel üzerinden çalışır,
+* İstemciler birbiriyle doğrudan haberleşebilir,
+* Birden fazla VPN kullanımı durumunda route çakışmaları giderilir,
+* Sistem yönlendirmeleri manuel olarak kontrol altına alınır.
+
+---
+
+## Okudğunuz için teşekkürler.

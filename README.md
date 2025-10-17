@@ -1,11 +1,13 @@
-# 🧩 OpenVPN Internal Network Setup (Private Network Layer)
+# OpenVPN İç Ağ (Internal Network) Kurulumu
 
-Bu doküman, kendi özel (internal) ağınızı oluşturmak için **OpenVPN Road Warrior Installer** kullanarak bir **OpenVPN sunucu ve istemci** yapısı kurmayı açıklar.
-Yapı, **dış (public) IP değişmeden**, istemciler arasında **özel bir sanal ağ (TUN)** oluşturur.
+Bu doküman, bir **OpenVPN sunucu ve istemci yapısı** kurarak **özel bir iç ağ (TUN arayüzü)** oluşturmayı açıklar.
+Bu yapı sayesinde **dış (public) IP adresi değişmeden**, istemciler arasında **şifreli ve güvenli bir özel ağ** oluşturulur.
 
 ---
 
-## 🚀 1. Kurulum Script’ini İndir ve Çalıştır
+## 1. Kurulum
+
+OpenVPN Road Warrior kurulum betiğini indirip çalıştırın:
 
 ```bash
 wget https://git.io/vpn -O openvpn-install.sh
@@ -13,7 +15,7 @@ sudo chmod +x openvpn-install.sh
 sudo bash openvpn-install.sh
 ```
 
-Kurulum sırasında aşağıdaki örnek yanıtları verebilirsiniz:
+Kurulum sırasında örnek olarak aşağıdaki yanıtları verebilirsiniz:
 
 ```
 Which protocol should OpenVPN use?
@@ -22,7 +24,7 @@ Which protocol should OpenVPN use?
 Protocol [1]: 1
 
 What port should OpenVPN listen to?
-Port [1194]: 
+Port [1194]:
 
 Select a DNS server for the clients:
    1) Current system resolvers
@@ -37,13 +39,14 @@ Enter a name for the first client:
 Name [client]: iphone
 ```
 
-Kurulum tamamlandığında, ilk istemci için `.ovpn` yapılandırma dosyası oluşturulur.
+Kurulum tamamlandığında, ilk istemci için `.ovpn` yapılandırma dosyası otomatik olarak oluşturulacaktır.
 
 ---
 
-## ⚙️ 2. OpenVPN Server Konfigürasyonu
+## 2. Sunucu Yapılandırması
 
-Sunucu konfigürasyonu `/etc/openvpn/server.conf` dosyasında yer alır:
+Sunucu yapılandırma dosyası `/etc/openvpn/server.conf` konumundadır.
+Aşağıda örnek bir yapılandırma gösterilmiştir:
 
 ```bash
 local your_server_ip
@@ -79,12 +82,13 @@ log-append /var/log/openvpn.log
 client-to-client
 ```
 
-🟢 **Not:**
-Bu yapı istemciler arasında **client-to-client** iletişimini aktif eder, yani VPN üzerinden birbirleriyle doğrudan iletişim kurabilirler.
+**Not:**
+`client-to-client` satırı, VPN istemcilerinin birbirleriyle doğrudan iletişim kurmasını sağlar.
+Bu özellik kapatılmak istenirse satır kaldırılabilir.
 
 ---
 
-## 📦 3. İstemci (Client) Yapılandırması
+## 3. İstemci Yapılandırması
 
 Oluşturulan `.ovpn` dosyalarını istemcilere kopyalayın:
 
@@ -95,9 +99,9 @@ sudo cp /path/to/client.ovpn /etc/openvpn/client/client.ovpn
 
 ---
 
-## 🧠 4. Systemd Üzerinden OpenVPN Client Servisi Oluşturma
+## 4. Systemd Servis Tanımı (İstemci)
 
-Yeni bir systemd servis dosyası oluşturun:
+İstemci bağlantısını sistem servisi olarak çalıştırmak için aşağıdaki adımları izleyin:
 
 ```bash
 sudo nano /etc/systemd/system/openvpn-client@client.service
@@ -120,7 +124,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Servisi aktif hale getirin:
+Servisi etkinleştirin ve başlatın:
 
 ```bash
 sudo systemctl daemon-reload
@@ -131,58 +135,57 @@ sudo systemctl status openvpn-client@client
 
 ---
 
-## 🌐 5. Network Topolojisi
+## 5. Ağ Topolojisi
 
-Bu yapı ile VPN istemcileri, aşağıdaki gibi **özel bir iç IP aralığı** üzerinden haberleşir:
+Bu yapılandırma ile tüm istemciler aşağıdaki örnek özel ağ üzerinden iletişim kurar:
 
 ```
-Server: 100.100.0.1
-Client-1: 100.100.0.2
-Client-2: 100.100.0.3
+Sunucu:   100.100.0.1
+İstemci-1: 100.100.0.2
+İstemci-2: 100.100.0.3
 ...
 ```
 
-🔒 Dış IP adresi değişmez; yalnızca VPN tüneli içindeki trafiği etkiler.
-Bu yöntem genellikle **servislerin birbirine güvenli erişimi** veya **özel SSH bağlantıları** için kullanılır.
+Dış IP adresi değişmeden, yalnızca VPN tüneli üzerinden geçen trafik etkilenir.
 
 ---
 
-## 🧩 6. Örnek Kullanım Senaryoları
+## 6. Kullanım Senaryoları
 
-Aşağıdaki örnekler, OpenVPN’in dahili ağ oluşturma gücünü gösterir:
+### 6.1 Güvenli SSH Erişimi
 
-### 🖥️ 1. Güvenli SSH Erişimi
-
-Birden fazla uzak sunucuya erişirken, sadece VPN iç IP’lerini kullanarak SSH bağlantısı kurabilirsiniz:
+Yönetim erişimi için SSH bağlantılarını doğrudan VPN iç IP adresleri üzerinden kurabilirsiniz:
 
 ```bash
 ssh root@100.100.0.2
 ```
 
-Bu sayede dış portları (22) internet’e açmadan yönetim yapabilirsiniz.
+Bu sayede 22 numaralı portu internete açmanıza gerek kalmaz.
 
 ---
 
-### ⚙️ 2. Servis Replikasyonu
+### 6.2 Servis Replikasyonu ve Senkronizasyonu
 
-Veritabanı veya cache servisleri (MySQL, Redis, MongoDB vb.) arasında yalnızca VPN iç IP’leriyle replikasyon yapılabilir:
+Veritabanı veya önbellek servisleri (MySQL, Redis, MongoDB vb.) arasında güvenli replikasyon kurulabilir:
 
 ```
 primary-db (100.100.0.2) <--> replica-db (100.100.0.3)
 ```
 
-Böylece hem trafik şifrelenmiş olur hem de güvenli bir replikasyon ağı kurulur.
+Tüm veri trafiği VPN tüneli içinde şifrelenmiş olarak aktarılır.
 
 ---
 
-### 🌐 3. Uygulama Sunucuları Arasında İç Trafik
+### 6.3 Uygulamalar Arası İç Trafik
 
-Web veya API sunucularınız, sadece VPN ağı üzerinden birbirine veri gönderebilir.
-Bu yöntem, **load balancer** veya **WAF** arkasında kalan sistemlerde güvenli dahili iletişim sağlar.
+Web veya API sunucuları yalnızca VPN iç ağı üzerinden birbirine veri gönderebilir.
+Bu yöntem, load balancer veya WAF arkasındaki sistemlerde dahili iletişimi güvenli hale getirir.
 
 ---
 
-## 📜 Log ve Durum Kontrolü
+## 7. Log ve Durum Kontrolü
+
+Log ve bağlantı durumlarını kontrol etmek için:
 
 ```bash
 sudo tail -f /var/log/openvpn.log
@@ -191,16 +194,15 @@ cat /etc/openvpn/openvpn-status.log
 
 ---
 
-## 🧱 Güvenlik İpuçları
+## 8. Güvenlik Önerileri
 
-* `ufw` veya `iptables` üzerinden yalnızca `1194/udp` portunu açın.
-* Gerekiyorsa `client-to-client` satırını kaldırarak istemciler arası iletişimi kapatabilirsiniz.
-* `.ovpn` dosyalarını paylaşmadan önce **sertifikaları koruyun**.
-* Sunucu IP’sini gizli tutmak için domain tabanlı bağlantı tercih edin.
-
----
-
-Okuduğunuz için teşekkürler.
+* Güvenlik duvarında yalnızca `1194/udp` portunu açık bırakın.
+* `client-to-client` özelliğini ihtiyacınız yoksa devre dışı bırakın.
+* `.ovpn` dosyalarını ve sertifikaları üçüncü kişilerle paylaşmayın.
+* Mümkünse IP yerine domain tabanlı bağlantı kullanın.
 
 ---
 
+## Okuduğunuz için teşekkürler.
+Uğur Uğur
+OpenVPN Özel Ağ Dokümantasyonu
